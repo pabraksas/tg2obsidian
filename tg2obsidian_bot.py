@@ -10,13 +10,15 @@ import aiohttp
 from pathlib import Path
 from datetime import datetime as dt
 from bs4 import BeautifulSoup
-import urllib.request
+# import urllib.request
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.filters.builtin import CommandStart, CommandHelp
 from aiogram.types import ContentType, File, Message, MessageEntity
 from aiogram.utils import executor
-from dotenv import get_key, load_dotenv
+
+from dotenv import load_dotenv
+from os import getenv as env
 
 import config
 
@@ -30,10 +32,10 @@ else:
 
 
 load_dotenv()
-# TELEGRAM_TOKEN = get_key("TELEGRAM_TOKEN")
-TELEGRAM_TOKEN=os.environ.get("TELEGRAM_TOKEN")
+# TELEGRAM_TOKEN=config.token
+TELEGRAM_TOKEN=env("TELEGRAM_TOKEN")
 
-bot = Bot(token=config.token)
+bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher(bot)
 
 
@@ -253,12 +255,12 @@ def get_forward_info(m: Message) -> str:
 def log_message(message):
     # Saving of the whole message into the incoming message log just in case
     if 'log_level' in dir(config) and config.log_level >= 2:
-        curr_date = dt.now().strftime('%Y-%m-%d')
-        curr_time = dt.now().strftime('%H:%M:%S')
-        file_name = 'messages-' + curr_date + '.txt'
-        with open(file_name, 'a', encoding='UTF-8') as f:
-            print(curr_time + '  ', list(message), '\n', file=f)
-        log_msg(f'Message content saved to {file_name}')
+        curr_date = dt.now().strftime('%Y%m%d%H%M%S')
+        msgdir = './messages'
+        filename = f"{msgdir}/{curr_date}.json"
+        with open(filename, 'a', encoding='UTF-8') as f:
+            print(list(message), ',\n', file=f)
+        # log_msg(f'Message content saved to {filename}')
 
 
 def get_note_file_name_parts(curr_date):
@@ -277,7 +279,7 @@ def create_media_file_name(message: Message, suffix='media', ext='jpg') -> str:
     # ToDo: переделать на дату отправки сообщения
     curr_date = get_curr_date()
     parts = get_note_file_name_parts(curr_date)
-    # ToDo: добавить в имя файлаusername исходного канала или пользователя
+    # ToDo: добавить в имя файла username исходного канала или пользователя
     # Если присутствует forward_from - оттуда, иначе из from
 
     # Строим среднюю часть имени без лишних - и _
@@ -315,6 +317,8 @@ def save_message(note: str) -> None:
         # Keep line breaks and add a header with a time stamp
         note_body = check_if_task(check_if_negative(note))
         note_text = f'#### [[{curr_date}]] {curr_time}\n{note_body}\n\n'
+
+    filename=f"{dt.now().strftime('%Y%m%d%H%M%S')}.json"
     with open(get_note_name(curr_date), 'a', encoding='UTF-8') as f:
         f.write(note_text)
 
