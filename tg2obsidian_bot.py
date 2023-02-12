@@ -16,25 +16,35 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.filters.builtin import CommandStart, CommandHelp
 from aiogram.types import ContentType, File, Message, MessageEntity
 from aiogram.utils import executor
+from dotenv import get_key, load_dotenv
 
 import config
 
 if 'log_level' in dir(config) and config.log_level >= 1:
     basic_log = True
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO, filename = 'bot.log', encoding = 'UTF-8', datefmt = '%Y-%m-%d %H:%M:%S')
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO, filename='bot.log',
+                        encoding='UTF-8', datefmt='%Y-%m-%d %H:%M:%S')
     log = logging.getLogger()
 else:
     basic_log = False
 
-bot = Bot(token = config.token)
+
+load_dotenv()
+# TELEGRAM_TOKEN = get_key("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN=os.environ.get("TELEGRAM_TOKEN")
+
+bot = Bot(token=config.token)
 dp = Dispatcher(bot)
+
 
 # Handlers
 @dp.message_handler(CommandStart())
 async def send_welcome(message: types.Message):
-    log_msg(f'Starting chat with the user @{message.from_user.username} ({message.from_user.first_name} {message.from_user.last_name}, user_id = {message.from_id}), chat_id = {message.chat.id} ({message.chat.title})')
+    log_msg(
+        f'Starting chat with the user @{message.from_user.username} ({message.from_user.first_name} {message.from_user.last_name}, user_id = {message.from_id}), chat_id = {message.chat.id} ({message.chat.title})')
     reply_text = f'Hello {message.from_user.full_name}!\n\nI`m a private bot, I save messages from a private Telegram group to Obsidian inbox.\n\nYour Id: {message.from_id}\nThis chat Id: {message.chat.id}\n'
     await message.reply(reply_text)
+
 
 @dp.message_handler(CommandHelp())
 async def help(message: types.Message):
@@ -45,9 +55,10 @@ async def help(message: types.Message):
     '''
     await message.reply(reply_text)
 
+
 @dp.message_handler(content_types=[ContentType.VOICE])
 async def handle_voice_message(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_msg(f'Received voice message from @{message.from_user.username}')
     if not config.recognize_voice:
         log_msg(f'Voice recognition is turned OFF')
@@ -62,13 +73,15 @@ async def handle_voice_message(message: Message):
     save_message(note_stt)
     os.remove(file_full_path)
 
+
 @dp.message_handler(content_types=[ContentType.PHOTO])
 async def handle_photo(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_msg(f'Received photo from @{message.from_user.username}')
     log_message(message)
     photo = message.photo[-1]
-    file_name = unique_indexed_filename(create_media_file_name(message, 'pic', 'jpg'), config.photo_path) # or photo.file_id + '.jpg'
+    file_name = unique_indexed_filename(create_media_file_name(message, 'pic', 'jpg'),
+                                        config.photo_path)  # or photo.file_id + '.jpg'
     print(f'Got photo: {file_name}')
     photo_file = await photo.get_file()
 
@@ -78,15 +91,16 @@ async def handle_photo(message: Message):
     photo_and_caption = f'{forward_info}![[{file_name}]]\n{await get_formatted_caption(message)}'
     save_message(photo_and_caption)
 
+
 @dp.message_handler(content_types=[ContentType.DOCUMENT])
 async def handle_document(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     file_name = unique_filename(message.document.file_name, config.photo_path)
     log_msg(f'Received document {file_name} from @{message.from_user.username}')
     log_message(message)
     print(f'Got document: {file_name}')
     file = await message.document.get_file()
-#    file_path = file.file_path
+    #    file_path = file.file_path
     await handle_file(file=file, file_name=file_name, path=config.photo_path)
 
     forward_info = get_forward_info(message)
@@ -96,7 +110,7 @@ async def handle_document(message: Message):
 
 @dp.message_handler(content_types=[ContentType.CONTACT])
 async def handle_contact(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_msg(f'Received contact from @{message.from_user.username}')
     log_message(message)
     print(f'Got contact')
@@ -106,7 +120,7 @@ async def handle_contact(message: Message):
 
 @dp.message_handler(content_types=[ContentType.LOCATION])
 async def handle_location(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_msg(f'Received location from @{message.from_user.username}')
     log_message(message)
     print(f'Got location')
@@ -116,14 +130,14 @@ async def handle_location(message: Message):
 
 @dp.message_handler(content_types=[ContentType.ANIMATION])
 async def handle_animation(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_message(message)
     file_name = unique_filename(message.document.file_name, config.photo_path)
     log_msg(f'Received animation {file_name} from @{message.from_user.username}')
     print(f'Got animation: {file_name}')
 
     file = await message.document.get_file()
-#    file_path = file.file_path
+    #    file_path = file.file_path
     await handle_file(file=file, file_name=file_name, path=config.photo_path)
 
     forward_info = get_forward_info(message)
@@ -133,14 +147,14 @@ async def handle_animation(message: Message):
 
 @dp.message_handler(content_types=[ContentType.VIDEO])
 async def handle_video(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_message(message)
     file_name = unique_filename(message.video.file_name, config.photo_path)
     log_msg(f'Received video {file_name} from @{message.from_user.username}')
     print(f'Got video: {file_name}')
 
     file = await message.video.get_file()
-#    file_path = file.file_path
+    #    file_path = file.file_path
     await handle_file(file=file, file_name=file_name, path=config.photo_path)
 
     doc_and_caption = f'{get_forward_info(message)}![[{file_name}]]\n{await get_formatted_caption(message)}'
@@ -149,14 +163,15 @@ async def handle_video(message: Message):
 
 @dp.message_handler(content_types=[ContentType.VIDEO_NOTE])
 async def handle_video_note(message: Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_message(message)
-    file_name = unique_indexed_filename(create_media_file_name(message.video_note, 'video_note', 'mp4'), config.photo_path)
+    file_name = unique_indexed_filename(create_media_file_name(message.video_note, 'video_note', 'mp4'),
+                                        config.photo_path)
     log_msg(f'Received video note from @{message.from_user.username}')
     print(f'Got video note: {file_name}')
 
     file = await message.video_note.get_file()
-#    file_path = file.file_path
+    #    file_path = file.file_path
     await handle_file(file=file, file_name=file_name, path=config.photo_path)
 
     doc_and_caption = f'{get_forward_info(message)}![[{file_name}]]\n{await get_formatted_caption(message)}'
@@ -165,7 +180,7 @@ async def handle_video_note(message: Message):
 
 @dp.message_handler()
 async def process_message(message: types.Message):
-#    if message.chat.id != config.my_chat_id: return
+    #    if message.chat.id != config.my_chat_id: return
     log_msg(f'Received text message from @{message.from_user.username}')
     log_message(message)
     message_body = await embed_formatting(message)
@@ -180,15 +195,15 @@ async def handle_file(file: File, file_name: str, path: str):
 
 
 async def get_formatted_caption(message: Message) -> str:
-
     if message.caption:
         doc_message = {
             'text': message.caption,
             'entities': message.caption_entities,
-            }
+        }
         return await embed_formatting(doc_message)
     else:
         return ''
+
 
 def get_forward_info(m: Message) -> str:
     # If the message is forwarded, extract forward info and make up forward header
@@ -234,6 +249,7 @@ def get_forward_info(m: Message) -> str:
 
     return result
 
+
 def log_message(message):
     # Saving of the whole message into the incoming message log just in case
     if 'log_level' in dir(config) and config.log_level >= 2:
@@ -241,7 +257,7 @@ def log_message(message):
         curr_time = dt.now().strftime('%H:%M:%S')
         file_name = 'messages-' + curr_date + '.txt'
         with open(file_name, 'a', encoding='UTF-8') as f:
-            print(curr_time + '  ', list(message), '\n', file = f)
+            print(curr_time + '  ', list(message), '\n', file=f)
         log_msg(f'Message content saved to {file_name}')
 
 
@@ -251,12 +267,13 @@ def get_note_file_name_parts(curr_date):
     filename_part2 = curr_date if 'note_date' in dir(config) and config.note_date is True else ''
     return [filename_part1, filename_part2, filename_part3]
 
+
 def get_note_name(curr_date) -> str:
     parts = get_note_file_name_parts(curr_date)
     return os.path.join(config.inbox_path, ''.join(parts) + '.md')
 
 
-def create_media_file_name(message: Message, suffix = 'media', ext = 'jpg') -> str:
+def create_media_file_name(message: Message, suffix='media', ext='jpg') -> str:
     # ToDo: переделать на дату отправки сообщения
     curr_date = get_curr_date()
     parts = get_note_file_name_parts(curr_date)
@@ -282,8 +299,10 @@ def format_messages() -> bool:
     format_messages = True if 'format_messages' not in dir(config) or config.format_messages else False
     return format_messages
 
+
 def create_link_info() -> bool:
     return False if 'create_link_info' not in dir(config) else config.create_link_info
+
 
 def save_message(note: str) -> None:
     curr_date = dt.now().strftime('%Y-%m-%d')
@@ -299,12 +318,14 @@ def save_message(note: str) -> None:
     with open(get_note_name(curr_date), 'a', encoding='UTF-8') as f:
         f.write(note_text)
 
+
 def check_if_task(note_body) -> str:
     is_task = False
     for keyword in config.task_keywords:
         if keyword.lower() in note_body.lower(): is_task = True
     if is_task: note_body = '- [ ] ' + note_body
     return note_body
+
 
 def check_if_negative(note_body) -> str:
     is_negative = False
@@ -313,26 +334,30 @@ def check_if_negative(note_body) -> str:
     if is_negative: note_body += f'\n{config.negative_tag}'
     return note_body
 
+
 # returns index of a first non ws character in a string
 def content_index(c: str) -> int:
     ret = 0
     for i in c:
-       if not i.isspace():
-           return ret
-       ret += 1
+        if not i.isspace():
+            return ret
+        ret += 1
     return -1
 
-#returns (ws?, content?, ws?)
+
+# returns (ws?, content?, ws?)
 def partition_string(text: str) -> tuple:
     start = content_index(text)
     if start == -1:
-        return (text,'','')
+        return (text, '', '')
     end = content_index(text[::-1])
     end = len(text) if end == -1 else len(text) - end
     return (text[:start], text[start:end], text[end:])
 
+
 def to_u16(text: str) -> bytes:
     return text.encode('utf-16-le')
+
 
 def from_u16(text: bytes) -> str:
     return text.decode('utf-16-le')
@@ -343,12 +368,13 @@ formats = {'bold': ('**', '**'),
            'underline': ('<u>', '</u>'),
            'strikethrough': ('~~', '~~'),
            'code': ('`', '`'),
-}
+           }
+
 
 def parse_entities(text: bytes,
-    entities: list[MessageEntity],
-    offset: int,
-    end: int) -> str:
+                   entities: list[MessageEntity],
+                   offset: int,
+                   end: int) -> str:
     formatted_note = ''
 
     for entity_index, entity in enumerate(entities):
@@ -365,14 +391,14 @@ def parse_entities(text: bytes,
             content_parts = partition_string(pre_content)
             formatted_note += '```'
             if (len(content_parts[0]) == 0 and
-                content_parts[1].find('\n') == -1):
+                    content_parts[1].find('\n') == -1):
                 formatted_note += '\n'
             formatted_note += pre_content
             if content_parts[2].find('\n') == -1:
                 formatted_note += '\n'
             formatted_note += '```'
             if (len(text) - entity_end < 2 or
-               from_u16(text[entity_end:entity_end+2])[0] != '\n'):
+                    from_u16(text[entity_end:entity_end + 2])[0] != '\n'):
                 formatted_note += '\n'
             continue
         # parse nested entities for exampe: "**bold _italic_**
@@ -385,7 +411,7 @@ def parse_entities(text: bytes,
             formatted_note += content_parts[0]
             i = 0
             while i < len(content):
-                index = content.find('\n\n', i) # inline formatting acros paragraphs, need to split
+                index = content.find('\n\n', i)  # inline formatting acros paragraphs, need to split
                 if index == -1:
                     formatted_note += format_code[0] + content[i:] + format_code[1]
                     break
@@ -410,6 +436,7 @@ def parse_entities(text: bytes,
         formatted_note += from_u16(text[offset:end])
     return formatted_note
 
+
 def is_single_url(message: Message) -> bool:
     # assuming there is atleast one entity
     entities = message['entities']
@@ -425,9 +452,11 @@ def is_single_url(message: Message) -> bool:
             return False
     return True
 
+
 async def download(url, session: aiohttp.ClientSession) -> str:
     async with session.get(url) as response:
         return await response.text()
+
 
 def get_open_graph_props(page: str) -> dict:
     props = {}
@@ -444,6 +473,7 @@ def get_open_graph_props(page: str) -> dict:
 
     return props
 
+
 async def get_url_info_formatting(url: str) -> str:
     async with aiohttp.ClientSession() as session:
         page = await download(url, session)
@@ -455,7 +485,7 @@ async def get_url_info_formatting(url: str) -> str:
             if 'image' in og_props:
                 image += "!["
                 if 'image:alt' in og_props:
-                   image += og_props['image:alt'].replace("\n", " ")
+                    image += og_props['image:alt'].replace("\n", " ")
                 image += f"]({og_props['image']})"
                 if 'image:width' in og_props and int(og_props['image:width']) < 600:
                     callout_type = "[!link-info]"
@@ -474,6 +504,7 @@ async def get_url_info_formatting(url: str) -> str:
                 formatted_note += f"\n> [{image}]({url})"
             return formatted_note + "\n"
         return ''
+
 
 async def embed_formatting(message: Message) -> str:
     # If the message contains any formatting (inclusing inline links), add corresponding Markdown markup
@@ -500,13 +531,14 @@ async def embed_formatting(message: Message) -> str:
         formatted_note = note
     return formatted_note
 
+
 async def stt(audio_file_path) -> str:
     import whisper
     model = config.whisper_model if 'whisper_model' in dir(config) else 'medium'
     model = whisper.load_model(model)
 
     log_msg('Audio recognition started')
-    result = model.transcribe(audio_file_path, verbose = False, language = 'ru')
+    result = model.transcribe(audio_file_path, verbose=False, language='ru')
     rawtext = ' '.join([segment['text'].strip() for segment in result['segments']])
     rawtext = re.sub(" +", " ", rawtext)
 
@@ -514,6 +546,7 @@ async def stt(audio_file_path) -> str:
     log_msg(f'Recognized: {alltext}')
 
     return alltext
+
 
 def unique_filename(file: str, path: str) -> str:
     """Change file name if file already exists"""
@@ -553,9 +586,8 @@ def unique_indexed_filename(file: str, path: str) -> str:
 
 
 async def get_contact_data(message: Message) -> str:
-
     if message.contact.user_id:
-        contact_user  = await get_telegram_username(message.contact.user_id)
+        contact_user = await get_telegram_username(message.contact.user_id)
 
     frontmatter_body = ''
     for field, value in message.contact:
@@ -606,6 +638,7 @@ def get_location_note(message: Message) -> str:
 '''
     return location_note
 
+
 def log_msg(text: str):
     if basic_log:
         log.info(text)
@@ -619,6 +652,6 @@ def bold(text: str) -> str:
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=False, relax = 1)
+    executor.start_polling(dp, skip_updates=False, relax=1)
 
 # The code below never runs

@@ -71,4 +71,4 @@ Check in the [Issues](https://github.com/dimonier/tg2obsidian/issues?q=is%3Aopen
 
 If you would like to thank the author of this project, your donations will be gratefully accepted here: https://pay.cloudtips.ru/p/1f9bf82f
 
-![](qrCode.png)
+![]()

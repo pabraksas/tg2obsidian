@@ -1,0 +1,14 @@
+# ###
+
+# ###
+python-dotenv
+# ###
+aiohttp
+aiogram
+beautifulsoup4
+lxml
+
+
+# ###       for voice
+# openai-whisper
+whisper
